@@ -39,8 +39,11 @@ def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional
         csv_reader = csv.DictReader(csv_file, dialect=dialect)
 
         for index, row in enumerate(csv_reader):
-            if include_row(rows, index, mode):
+            if not rows:
                 json_arr.append(row)
+            else:
+                if include_row(rows, index, mode):
+                    json_arr.append(row)
 
     with open(json_path, 'w', encoding='utf-8') as json_file:
         json_str = json.dumps(json_arr, indent=int(indent_size))
@@ -79,8 +82,8 @@ def parse_row_numbers(args: List[str], mode: str) -> Dict[int, bool]:
         # TODO: Only allow positive integers (8, 1, 55) and ranges (1-5)
         if mode == 'include':
             rows[int(arg)] = True
-        elif mode == 'exculde':
-            rows[int(args)] = False
+        elif mode == 'exclude':
+            rows[int(arg)] = False
 
     return rows
 
@@ -118,6 +121,13 @@ def add_arguments(parser: ArgumentParser):
         default=None,
         help='rows that are included in output json e.g. 1 3 8, 2-6 or 2-6 9 11-12',
     )
+    parser.add_argument(
+        '--xrows',
+        nargs='*',
+        metavar='rows that are excluded from output json',
+        default=None,
+        help='rows that are excluded from output json e.g. 1 3 8, 2-6 or 2-6 9 11-12',
+    )
 
 
 def main():
@@ -130,6 +140,7 @@ def main():
     indent_size = 4
     rows = {}
     mode = None
+    invalid_rows = False
 
     if args.read != None:
         input_file = args.read[0]
@@ -140,6 +151,15 @@ def main():
     if args.rows != None:
         mode = 'include'
         rows = parse_row_numbers(args.rows, mode)
+    if args.xrows != None:
+        if mode:
+            invalid_rows = True
+        mode = 'exclude'
+        rows = parse_row_numbers(args.xrows, mode)
+
+    if invalid_rows:
+        print("Error: you cannot include and exclude rows at the same time")
+        quit()
 
     validate_input_file(input_file)
     validate_output_file(output_file)
