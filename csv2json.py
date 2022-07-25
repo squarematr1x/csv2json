@@ -128,6 +128,32 @@ def add_arguments(parser: ArgumentParser):
         default=None,
         help='rows that are excluded from output json e.g. 1 3 8, 2-6 or 2-6 9 11-12',
     )
+    parser.add_argument(
+        '--columns',
+        nargs='*',
+        metavar='columns that are included in output json',
+        default=None,
+        help='names of the columns that should be included in output'
+    )
+    parser.add_argument(
+        '--xcolumns',
+        nargs='*',
+        metavar='columns that should be excluded from output json',
+        default=None,
+        help='names of the columns that should be excluded from output json'
+    )
+    parser.add_argument(
+        '--head',
+        nargs=0,
+        default=None,
+        help='returns first 5 rows of input as json'
+    )
+    parser.add_argument(
+        '--tail',
+        nargs=0,
+        default=None,
+        help='returns last 5 rows of input as json'
+    )
 
 
 def main():
