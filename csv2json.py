@@ -123,14 +123,14 @@ def add_arguments(parser: ArgumentParser):
     )
     parser.add_argument(
         '--head',
-        nargs=1,
+        action='store_true',
         default=None,
-        # If arr len < 5 return just arr otherwise 0:5
+        # If arr len < 5 return just arr otherwise 0:4
         help='returns first 5 rows of input as json'
     )
     parser.add_argument(
         '--tail',
-        nargs=1,
+        action='store_true',
         default=None,
         # If arr len < 5 return just arr otherwise -5:-1
         help='returns last 5 rows of input as json'
@@ -150,21 +150,25 @@ def main():
     invalid_rows = False
     valid_input = True
 
-    if args.read != None:
+    if args.read:
         input_file = args.read[0]
-    if args.write != None:
+    if args.write:
         output_file = args.write[0]
-    if args.indent != None:
+    if args.indent:
         indent_size = args.indent[0]
-    if args.rows != None:
+    if args.rows:
         mode = 'include'
         valid_input = valid_row_input(args.rows)
         rows = parse_row_numbers(args.rows, mode)
-    if args.xrows != None:
+    if args.xrows:
         if mode:
             invalid_rows = True
         mode = 'exclude'
         rows = parse_row_numbers(args.xrows, mode)
+    if args.head:
+        pass
+    if args.tail:
+        pass
 
     if invalid_rows:
         print("Error: you cannot include and exclude rows at the same time")
