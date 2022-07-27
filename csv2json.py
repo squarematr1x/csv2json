@@ -2,9 +2,12 @@ import os
 import time
 import csv
 import json
+import re
 
 from argparse import ArgumentParser
 from typing import List, Dict, Optional
+
+from validate import *
 
 
 def include_row(rows: Dict[int, bool], index: int, mode: str) -> bool:
@@ -52,34 +55,10 @@ def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional
         json_file.write(json_str)
 
 
-def valid_path(path: str) -> bool:
-    return os.path.exists(path)
-
-
-def valid_file_extension(path: str, extension: str) -> bool:
-    return path[-len(extension):] == extension
-
-
-def validate_input_file(path: str):
-    if not valid_path(path):
-        print('Error: Invalid file path for input csv file')
-        quit()
-    if not valid_file_extension(path, '.csv'):
-        print('Error: Input file extension must be ".csv"')
-        quit()
-
-
-def validate_output_file(path: str):
-    if not valid_file_extension(path, '.json'):
-        print('Error: output file extension must be ".json"')
-        quit()
-
-
 def parse_row_numbers(args: List[str], mode: str) -> Dict[int, bool]:
     rows = {}
 
     for arg in args:
-        # TODO: Only allow positive integers (8, 1, 55) and ranges (1-5)
         if mode == 'include':
             rows[int(arg)] = True
         elif mode == 'exclude':
@@ -144,14 +123,16 @@ def add_arguments(parser: ArgumentParser):
     )
     parser.add_argument(
         '--head',
-        nargs=0,
+        nargs=1,
         default=None,
+        # If arr len < 5 return just arr otherwise 0:5
         help='returns first 5 rows of input as json'
     )
     parser.add_argument(
         '--tail',
-        nargs=0,
+        nargs=1,
         default=None,
+        # If arr len < 5 return just arr otherwise -5:-1
         help='returns last 5 rows of input as json'
     )
 
@@ -167,6 +148,7 @@ def main():
     rows = {}
     mode = None
     invalid_rows = False
+    valid_input = True
 
     if args.read != None:
         input_file = args.read[0]
@@ -176,6 +158,7 @@ def main():
         indent_size = args.indent[0]
     if args.rows != None:
         mode = 'include'
+        valid_input = valid_row_input(args.rows)
         rows = parse_row_numbers(args.rows, mode)
     if args.xrows != None:
         if mode:
@@ -187,8 +170,11 @@ def main():
         print("Error: you cannot include and exclude rows at the same time")
         quit()
 
-    validate_input_file(input_file)
-    validate_output_file(output_file)
+    valid_input = valid_input_file(input_file)
+    valid_input = valid_output_file(output_file)
+
+    if not valid_input:
+        quit()
 
     start_t = time.time()
     csv2json(input_file, output_file, indent_size, rows, mode)
