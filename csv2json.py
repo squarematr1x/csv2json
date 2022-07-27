@@ -174,8 +174,7 @@ def main():
         print("Error: you cannot include and exclude rows at the same time")
         quit()
 
-    valid_input = valid_input_file(input_file)
-    valid_input = valid_output_file(output_file)
+    valid_input = valid_files(input_file, output_file)
 
     if not valid_input:
         quit()

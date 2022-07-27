@@ -32,6 +32,10 @@ def valid_output_file(path: str) -> bool:
     return True
 
 
+def valid_files(input_path: str, output_path: str) -> bool:
+    return valid_input_file(input_path) and valid_output_file(output_path)
+
+
 def valid_row_input(args: List[str]) -> bool:
     """
     Validate input csv rows to be included in the output json.
