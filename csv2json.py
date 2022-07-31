@@ -18,19 +18,38 @@ def include_row(rows: Dict[int, bool], index: int, mode: str) -> bool:
         return True
 
 
+def get_head(csv_reader: csv.DictReader) -> List[Dict]:
+    json_arr = []
+    head_size = 5
+
+    for index, row in enumerate(csv_reader):
+        if index == head_size:
+            break
+        json_arr.append(row)
+
+    return json_arr
+
+
+def get_tail():
+    pass
+
+
 def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional[Dict[int, bool]] = None, mode: Optional[str] = None):
     """
     Converts input csv to json.
 
     """
-    ALLOWED_MODES = [
+
+    ALLOWED_ROW_MODES = [
         None,
         'include',
         'exclude',
+        'head',
+        'tail',
     ]
 
-    if mode not in ALLOWED_MODES:
-        raise ValueError(f'Invalud mode. Expected one of: {ALLOWED_MODES}')
+    if mode not in ALLOWED_ROW_MODES:
+        raise ValueError(f'Invalud mode. Expected one of: {ALLOWED_ROW_MODES}')
 
     json_arr = []
 
@@ -39,12 +58,15 @@ def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional
         csv_file.seek(0)
         csv_reader = csv.DictReader(csv_file, dialect=dialect)
 
-        for index, row in enumerate(csv_reader):
-            if not rows:
-                json_arr.append(row)
-            else:
-                if include_row(rows, index, mode):
+        if mode == 'head':
+            json_arr = get_head(csv_reader)
+        else:
+            for index, row in enumerate(csv_reader):
+                if not rows:
                     json_arr.append(row)
+                else:
+                    if include_row(rows, index, mode):
+                        json_arr.append(row)
 
     with open(json_path, 'w', encoding='utf-8') as json_file:
         json_str = json.dumps(json_arr, indent=int(indent_size))
@@ -152,16 +174,23 @@ def main():
     if args.xrows:
         if mode:
             invalid_rows = True
-        mode = 'exclude'
-        rows = parse_row_numbers(args.xrows, mode)
+        if not invalid_rows:
+            mode = 'exclude'
+            rows = parse_row_numbers(args.xrows, mode)
     if args.columns:
         pass
     if args.xcolumns:
         pass
     if args.head:
-        pass
+        if mode:
+            invalid_rows = True
+        if not invalid_rows:
+            mode = 'head'
     if args.tail:
-        pass
+        if mode:
+            invalid_rows = True
+        if not invalid_rows:
+            mode = 'tail'
 
     if invalid_rows:
         print("Error: you cannot include and exclude rows at the same time")
