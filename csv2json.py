@@ -19,6 +19,10 @@ def include_row(rows: Dict[int, bool], index: int, mode: str) -> bool:
 
 
 def get_head(csv_reader: csv.DictReader) -> List[Dict]:
+    """
+    Get 5 first rows of input.
+    """
+
     json_arr = []
     head_size = 5
 
@@ -30,11 +34,24 @@ def get_head(csv_reader: csv.DictReader) -> List[Dict]:
     return json_arr
 
 
-def get_tail():
-    pass
+def get_tail(csv_reader: csv.DictReader) -> List[Dict]:
+    """
+    Get 5 last rows of input.
+    """
+
+    json_arr = []
+    reader = list(csv_reader)
+    tail_size = 5
+
+    for index, row in enumerate(reversed(reader)):
+        if index == tail_size:
+            break
+        json_arr.append(row)
+
+    return json_arr
 
 
-def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional[Dict[int, bool]] = None, mode: Optional[str] = None):
+def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional[Dict[int, bool]] = None, row_mode: Optional[str] = None):
     """
     Converts input csv to json.
 
@@ -48,7 +65,7 @@ def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional
         'tail',
     ]
 
-    if mode not in ALLOWED_ROW_MODES:
+    if row_mode not in ALLOWED_ROW_MODES:
         raise ValueError(f'Invalud mode. Expected one of: {ALLOWED_ROW_MODES}')
 
     json_arr = []
@@ -58,14 +75,16 @@ def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional
         csv_file.seek(0)
         csv_reader = csv.DictReader(csv_file, dialect=dialect)
 
-        if mode == 'head':
+        if row_mode == 'tail':
+            json_arr = get_tail(csv_reader)
+        elif row_mode == 'head':
             json_arr = get_head(csv_reader)
         else:
             for index, row in enumerate(csv_reader):
                 if not rows:
                     json_arr.append(row)
                 else:
-                    if include_row(rows, index, mode):
+                    if include_row(rows, index, row_mode):
                         json_arr.append(row)
 
     with open(json_path, 'w', encoding='utf-8') as json_file:
@@ -137,13 +156,11 @@ def add_arguments(parser: ArgumentParser):
     parser.add_argument(
         '--head',
         action='store_true',
-        # If arr len < 5 return just arr otherwise 0:4
         help='returns first 5 rows of input as json'
     )
     parser.add_argument(
         '--tail',
         action='store_true',
-        # If arr len < 5 return just arr otherwise -5:-1
         help='returns last 5 rows of input as json'
     )
 
