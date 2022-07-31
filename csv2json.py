@@ -1,8 +1,6 @@
-import os
 import time
 import csv
 import json
-import re
 
 from argparse import ArgumentParser
 from typing import List, Dict, Optional
@@ -73,7 +71,6 @@ def add_arguments(parser: ArgumentParser):
         '--read',
         nargs=1,
         metavar='csv file name',
-        default=None,
         required=True,
         help='csv file that needs to be converted to json',
     )
@@ -82,7 +79,6 @@ def add_arguments(parser: ArgumentParser):
         '--write',
         nargs=1,
         metavar='json file name',
-        default=None,
         required=True,
         help='name of the resulting json file',
     )
@@ -90,48 +86,41 @@ def add_arguments(parser: ArgumentParser):
         '--indent',
         nargs=1,
         metavar='indent size',
-        default=None,
         help='number of indent spaces in json file',
     )
     parser.add_argument(
         '--rows',
         nargs='*',
         metavar='rows that are included in output json',
-        default=None,
         help='rows that are included in output json e.g. 1 3 8, 2-6 or 2-6 9 11-12',
     )
     parser.add_argument(
         '--xrows',
         nargs='*',
         metavar='rows that are excluded from output json',
-        default=None,
         help='rows that are excluded from output json e.g. 1 3 8, 2-6 or 2-6 9 11-12',
     )
     parser.add_argument(
         '--columns',
         nargs='*',
         metavar='columns that are included in output json',
-        default=None,
         help='names of the columns that should be included in output'
     )
     parser.add_argument(
         '--xcolumns',
         nargs='*',
         metavar='columns that should be excluded from output json',
-        default=None,
         help='names of the columns that should be excluded from output json'
     )
     parser.add_argument(
         '--head',
         action='store_true',
-        default=None,
         # If arr len < 5 return just arr otherwise 0:4
         help='returns first 5 rows of input as json'
     )
     parser.add_argument(
         '--tail',
         action='store_true',
-        default=None,
         # If arr len < 5 return just arr otherwise -5:-1
         help='returns last 5 rows of input as json'
     )
@@ -165,6 +154,10 @@ def main():
             invalid_rows = True
         mode = 'exclude'
         rows = parse_row_numbers(args.xrows, mode)
+    if args.columns:
+        pass
+    if args.xcolumns:
+        pass
     if args.head:
         pass
     if args.tail:
