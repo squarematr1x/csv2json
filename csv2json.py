@@ -1,6 +1,6 @@
 import time
-import csv
-import json
+
+import pandas as pd
 
 from argparse import ArgumentParser
 from typing import List, Dict, Optional
@@ -8,50 +8,9 @@ from typing import List, Dict, Optional
 from validate import *
 
 
-def include_row(rows: Dict[int, bool], index: int, mode: str) -> bool:
-    if index in rows:
-        return rows[index]
-
-    if mode == 'include':
-        return False
-    elif mode == 'exclude':
-        return True
-
-
-def get_head(csv_reader: csv.DictReader) -> List[Dict]:
-    """
-    Get 5 first rows of input.
-    """
-
-    json_arr = []
-    head_size = 5
-
-    for index, row in enumerate(csv_reader):
-        if index == head_size:
-            break
-        json_arr.append(row)
-
-    return json_arr
-
-
-def get_tail(csv_reader: csv.DictReader) -> List[Dict]:
-    """
-    Get 5 last rows of input.
-    """
-
-    json_arr = []
-    reader = list(csv_reader)
-    tail_size = 5
-
-    for index, row in enumerate(reversed(reader)):
-        if index == tail_size:
-            break
-        json_arr.append(row)
-
-    return json_arr
-
-
-def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional[Dict[int, bool]] = None, row_mode: Optional[str] = None):
+def csv2json(csv_path: str, json_path: str, indent_size: int = 4,
+             rows: Optional[List[int]] = None, row_mode: Optional[str] = None,
+             columns: Optional[List[str]] = None, column_mode: Optional[str] = None):
     """
     Converts input csv to json.
 
@@ -65,77 +24,70 @@ def csv2json(csv_path: str, json_path: str, indent_size: int = 4, rows: Optional
         'tail',
     ]
 
-    if row_mode not in ALLOWED_ROW_MODES:
-        raise ValueError(f'Invalud mode. Expected one of: {ALLOWED_ROW_MODES}')
-
-    json_arr = []
-
-    with open(csv_path, encoding='utf-8-sig') as csv_file:
-        dialect = csv.Sniffer().sniff(csv_file.read(), delimiters=';,')
-        csv_file.seek(0)
-        csv_reader = csv.DictReader(csv_file, dialect=dialect)
-
-        if row_mode == 'tail':
-            json_arr = get_tail(csv_reader)
-        elif row_mode == 'head':
-            json_arr = get_head(csv_reader)
-        else:
-            for index, row in enumerate(csv_reader):
-                if not rows:
-                    json_arr.append(row)
-                else:
-                    if include_row(rows, index, row_mode):
-                        json_arr.append(row)
-
-    with open(json_path, 'w', encoding='utf-8') as json_file:
-        json_str = json.dumps(json_arr, indent=int(indent_size))
-        # Remove non-breaking spaces
-        json_str = json_str.replace('\\u00a0', '')
-        json_file.write(json_str)
-
-
-def get_row_numbers(arg: str, mode: bool) -> Dict[int, bool]:
-    """
-    Get user defined input row numbers.
-    """
-
-    ALLOWED_ROW_MODES = [
+    ALLOWED_HEADER_MODES = [
+        None,
         'include',
         'exclude',
     ]
 
-    if mode not in ALLOWED_ROW_MODES:
+    if row_mode not in ALLOWED_ROW_MODES:
         raise ValueError(f'Invalud mode. Expected one of: {ALLOWED_ROW_MODES}')
 
-    input_numbers = arg.split('-')
-    row_numbers = {}
-    include_flag = True
+    if column_mode not in ALLOWED_HEADER_MODES:
+        raise ValueError(f'Invalud mode. Expected one of: {ALLOWED_ROW_MODES}')
 
-    if mode == 'exclude':
-        include_flag = False
+    df = pd.read_csv(csv_path, engine='python', sep=None)
+
+    if row_mode == 'tail':
+        df = df.tail()
+    elif row_mode == 'head':
+        df = df.head()
+    elif row_mode == 'include':
+        df = df.iloc[rows]
+    elif row_mode == 'exclude':
+        df = df.drop(rows)
+
+    if column_mode == 'include':
+        df = df[columns]
+    elif column_mode == 'exclude':
+        df = df.drop(columns=columns)
+
+    json_str = df.to_json(orient='records', indent=indent_size)
+
+    with open(json_path, 'w', encoding='utf-8') as json_file:
+        json_file.write(json_str)
+
+
+def get_row_numbers(arg: str) -> Dict[int, bool]:
+    """
+    Get user defined input row numbers.
+    """
+
+    input_numbers = arg.split('-')
+    rows = []
 
     if len(input_numbers) == 1:
-        row_numbers[int(input_numbers[0])] = include_flag
+        rows.append(int(input_numbers[0]))
     else:
         # TODO: Ensure that range end is larger than range start
         range_start, range_end = int(input_numbers[0]), int(input_numbers[1])
         for i in range(range_start, range_end + 1):
-            row_numbers[i] = include_flag
+            rows.append(i)
 
-    return row_numbers
+    return rows
 
 
-def parse_row_numbers(args: List[str], mode: str) -> Dict[int, bool]:
+def parse_row_numbers(args: List[str], mode: str) -> List[int]:
     """
     Get user defined row numbers.
     Rows can be defined as integers or ranges.
     Example:    --rows 0 2-4 8
                 return rows 0, 2, 3, 4 and 8        
     """
-    rows = {}
+    rows = []
 
     for arg in args:
-        rows = {**rows, **get_row_numbers(arg, mode)}
+        rows += get_row_numbers(arg)
 
     return rows
 
@@ -207,10 +159,12 @@ def main():
     input_file = None
     output_file = None
     indent_size = 4
-    rows = {}
+    rows = []
     row_mode = None
     invalid_rows = False
     valid_input = True
+    columns = None
+    column_mode = None
 
     if args.read:
         input_file = args.read[0]
@@ -229,9 +183,11 @@ def main():
             row_mode = 'exclude'
             rows = parse_row_numbers(args.xrows, row_mode)
     if args.columns:
-        pass
+        column_mode = 'include'
+        columns = args.columns
     if args.xcolumns:
-        pass
+        column_mode = 'exclude'
+        columns = args.xcolumns
     if args.head:
         if row_mode:
             invalid_rows = True
@@ -253,7 +209,8 @@ def main():
         quit()
 
     start_t = time.time()
-    csv2json(input_file, output_file, indent_size, rows, row_mode)
+    csv2json(input_file, output_file, indent_size, rows, row_mode,
+             columns, column_mode)
     end_t = time.time()
     print(f'Converted in time: {end_t - start_t}')
 
