@@ -8,7 +8,7 @@ from typing import List, Dict, Optional
 from validate import *
 
 
-def csv2json(csv_path: str, json_path: str, indent_size: int = 4,
+def csv2json(csv_path: str, json_path: str, indent: int = 4,
              rows: Optional[List[int]] = None, row_mode: Optional[str] = None,
              columns: Optional[List[str]] = None, column_mode: Optional[str] = None):
     """
@@ -45,14 +45,14 @@ def csv2json(csv_path: str, json_path: str, indent_size: int = 4,
     elif row_mode == 'include':
         df = df.iloc[rows]
     elif row_mode == 'exclude':
-        df = df.drop(rows)
+        df.drop(rows, inplace=True)
 
     if column_mode == 'include':
         df = df[columns]
     elif column_mode == 'exclude':
-        df = df.drop(columns=columns)
+        df.drop(columns=columns, inplace=True)
 
-    json_str = df.to_json(orient='records', indent=indent_size)
+    json_str = df.to_json(orient='records', indent=indent)
 
     with open(json_path, 'w', encoding='utf-8') as json_file:
         json_file.write(json_str)
@@ -77,7 +77,7 @@ def get_row_numbers(arg: str) -> Dict[int, bool]:
     return rows
 
 
-def parse_row_numbers(args: List[str], mode: str) -> List[int]:
+def parse_row_numbers(args: List[str]) -> List[int]:
     """
     Get user defined row numbers.
     Rows can be defined as integers or ranges.
@@ -158,36 +158,40 @@ def main():
 
     input_file = None
     output_file = None
-    indent_size = 4
+    valid_input = True
+    indent = 4
     rows = []
     row_mode = None
     invalid_rows = False
-    valid_input = True
     columns = None
     column_mode = None
+    invalid_columns = False
 
     if args.read:
         input_file = args.read[0]
     if args.write:
         output_file = args.write[0]
     if args.indent:
-        indent_size = args.indent[0]
+        indent = args.indent[0]
     if args.rows:
         row_mode = 'include'
         valid_input = valid_row_input(args.rows)
-        rows = parse_row_numbers(args.rows, row_mode)
+        rows = parse_row_numbers(args.rows)
     if args.xrows:
         if row_mode:
             invalid_rows = True
         if not invalid_rows:
             row_mode = 'exclude'
-            rows = parse_row_numbers(args.xrows, row_mode)
+            rows = parse_row_numbers(args.xrows)
     if args.columns:
         column_mode = 'include'
         columns = args.columns
     if args.xcolumns:
-        column_mode = 'exclude'
-        columns = args.xcolumns
+        if column_mode:
+            invalid_columns = True
+        if not invalid_columns:
+            column_mode = 'exclude'
+            columns = args.xcolumns
     if args.head:
         if row_mode:
             invalid_rows = True
@@ -203,13 +207,17 @@ def main():
         print("Error: you cannot include and exclude rows at the same time")
         quit()
 
+    if invalid_columns:
+        print("Error: you cannot include and exclude columns at the same time")
+        quit()
+
     valid_input = valid_files(input_file, output_file)
 
     if not valid_input:
         quit()
 
     start_t = time.time()
-    csv2json(input_file, output_file, indent_size, rows, row_mode,
+    csv2json(input_file, output_file, indent, rows, row_mode,
              columns, column_mode)
     end_t = time.time()
     print(f'Converted in time: {end_t - start_t}')
