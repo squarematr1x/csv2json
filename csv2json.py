@@ -99,20 +99,12 @@ def parse_row_numbers(args: List[str]) -> List[int]:
 
 def add_arguments(parser: ArgumentParser):
     parser.add_argument(
-        '-r',
-        '--read',
-        nargs=1,
-        metavar='csv file name',
+        '-c',
+        '--convert',
+        nargs=2,
+        metavar=['csv file name', 'json file name'],
         required=True,
-        help='csv file that needs to be converted to json',
-    )
-    parser.add_argument(
-        '-w',
-        '--write',
-        nargs=1,
-        metavar='json file name',
-        required=True,
-        help='name of the resulting json file',
+        help=' convert csv file to json',
     )
     parser.add_argument(
         '--indent',
@@ -172,10 +164,9 @@ def main():
     column_mode = None
     invalid_columns = False
 
-    if args.read:
-        input_file = args.read[0]
-    if args.write:
-        output_file = args.write[0]
+    if args.convert:
+        input_file = args.convert[0]
+        output_file = args.convert[1]
     if args.indent:
         indent = args.indent[0]
     if args.rows:
