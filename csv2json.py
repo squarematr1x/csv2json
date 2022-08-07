@@ -106,6 +106,7 @@ def add_arguments(parser: ArgumentParser):
         help=' convert csv file to json',
     )
     parser.add_argument(
+        '-i',
         '--indent',
         nargs=1,
         metavar='indent size',
@@ -167,7 +168,7 @@ def main():
         input_file = args.convert[0]
         output_file = args.convert[1]
     if args.indent:
-        indent = args.indent[0]
+        indent = int(args.indent[0])
     if args.rows:
         row_mode = 'include'
         valid_input = valid_row_input(args.rows)
