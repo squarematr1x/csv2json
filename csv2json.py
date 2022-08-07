@@ -35,7 +35,7 @@ def csv2json(csv_path: str, json_path: str, indent: int = 4,
     if column_mode not in ALLOWED_HEADER_MODES:
         raise ValueError(f'Invalud mode. Expected one of: {ALLOWED_ROW_MODES}')
 
-    df = pd.read_csv(csv_path, engine='python', sep=None)
+    df = pd.read_csv(csv_path, engine='python', sep=None, encoding='utf-8-sig')
 
     if row_mode == 'tail':
         df = df.tail()
