@@ -69,8 +69,13 @@ def get_row_numbers(arg: str) -> Dict[int, bool]:
     if len(input_numbers) == 1:
         rows.append(int(input_numbers[0]))
     else:
-        # TODO: Ensure that range end is larger than range start
         range_start, range_end = int(input_numbers[0]), int(input_numbers[1])
+
+        if range_start >= range_end:
+            error = 'Error: starting index must be smaller than ending index in number ranges'
+            print(error)
+            quit()
+
         for i in range(range_start, range_end + 1):
             rows.append(i)
 
@@ -82,7 +87,7 @@ def parse_row_numbers(args: List[str]) -> List[int]:
     Get user defined row numbers.
     Rows can be defined as integers or ranges.
     Example:    --rows 0 2-4 8
-                return rows 0, 2, 3, 4 and 8        
+                returns a list of integers [0, 2, 3, 4, 8]      
     """
     rows = []
 
