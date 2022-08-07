@@ -11,10 +11,9 @@ from validate import *
 def csv2json(csv_path: str, json_path: str, indent: int = 4,
              rows: Optional[List[int]] = None, row_mode: Optional[str] = None,
              columns: Optional[List[str]] = None, column_mode: Optional[str] = None):
-    """
+    '''
     Converts input csv to json.
-
-    """
+    '''
 
     ALLOWED_ROW_MODES = [
         None,
@@ -59,9 +58,9 @@ def csv2json(csv_path: str, json_path: str, indent: int = 4,
 
 
 def get_row_numbers(arg: str) -> Dict[int, bool]:
-    """
+    '''
     Get user defined input row numbers.
-    """
+    '''
 
     input_numbers = arg.split('-')
     rows = []
@@ -83,12 +82,12 @@ def get_row_numbers(arg: str) -> Dict[int, bool]:
 
 
 def parse_row_numbers(args: List[str]) -> List[int]:
-    """
+    '''
     Get user defined row numbers.
     Rows can be defined as integers or ranges.
     Example:    --rows 0 2-4 8
                 returns a list of integers [0, 2, 3, 4, 8]      
-    """
+    '''
     rows = []
 
     for arg in args:
@@ -200,11 +199,11 @@ def main():
             row_mode = 'tail'
 
     if invalid_rows:
-        print("Error: you cannot include and exclude rows at the same time")
+        print('Error: you cannot include and exclude rows at the same time')
         quit()
 
     if invalid_columns:
-        print("Error: you cannot include and exclude columns at the same time")
+        print('Error: you cannot include and exclude columns at the same time')
         quit()
 
     valid_input = valid_files(input_file, output_file)

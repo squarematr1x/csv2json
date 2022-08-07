@@ -37,10 +37,10 @@ def valid_files(input_path: str, output_path: str) -> bool:
 
 
 def valid_row_input(args: List[str]) -> bool:
-    """
+    '''
     Validate input csv rows to be included in the output json.
     Strings such as "2 4 6", "7-11" and "3 6-8 12" are allowed.
-    """
+    '''
 
     allowed_str = re.compile('^[0-9]+$|^[0-9]+-[0-9]+$')
     allowed_input = True
