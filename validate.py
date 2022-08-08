@@ -4,8 +4,13 @@ import re
 from typing import List
 
 
-def valid_path(path: str) -> bool:
-    return os.path.exists(path)
+def valid_path(file_path: str) -> bool:
+    return os.path.exists(file_path)
+
+
+def valid_file_name(name: str) -> bool:
+    allowed_name = re.compile('^[^<>:;,?"*|/]+$')
+    return allowed_name.match(name)
 
 
 def valid_file_extension(path: str, extension: str) -> bool:
@@ -25,6 +30,21 @@ def valid_input_file(path: str) -> bool:
 
 
 def valid_output_file(path: str) -> bool:
+    valid_name = valid_file_name(path)
+
+    if '/' in path:
+        path_tokens = path.rsplit('/', 1)
+        print(path_tokens)
+        if not valid_path(path_tokens[0]):
+            print('Error: Invalid file path for output json file')
+            return False
+
+        valid_name = valid_file_name(path_tokens[1])
+
+    if not valid_name:
+        print('Error: Invalid file name')
+        return False
+
     if not valid_file_extension(path, '.json'):
         print('Error: output file extension must be ".json"')
         return False
