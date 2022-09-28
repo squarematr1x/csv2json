@@ -217,3 +217,9 @@ output.json:
 ]
 
 ```
+
+### Test
+
+```
+python -m unittest
+```
