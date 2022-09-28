@@ -8,9 +8,25 @@ from typing import List, Dict, Optional
 from validate import *
 
 
-def csv2json(csv_path: str, json_path: str, indent: int = 4,
-             rows: Optional[List[int]] = None, row_mode: Optional[str] = None,
-             columns: Optional[List[str]] = None, column_mode: Optional[str] = None):
+def load_csv(csv_path) -> pd.DataFrame:
+    '''
+    Read input csv file and return pandas dataframe
+    '''
+    df = pd.read_csv(csv_path, engine='python', sep=None, encoding='utf-8-sig')
+    return df
+
+
+def save_json(json_path, json_str):
+    '''
+    Save output json
+    '''
+    with open(json_path, 'w', encoding='utf-8') as json_file:
+        json_file.write(json_str)
+
+
+def csv2json(csv_path: str, indent: int = 4, rows: Optional[List[int]] = None,
+             row_mode: Optional[str] = None, columns: Optional[List[str]] = None,
+             column_mode: Optional[str] = None) -> str:
     '''
     Converts input csv to json.
     '''
@@ -35,7 +51,7 @@ def csv2json(csv_path: str, json_path: str, indent: int = 4,
     if column_mode not in ALLOWED_HEADER_MODES:
         raise ValueError(f'Invalud mode. Expected one of: {ALLOWED_ROW_MODES}')
 
-    df = pd.read_csv(csv_path, engine='python', sep=None, encoding='utf-8-sig')
+    df = load_csv(csv_path)
 
     if row_mode == 'tail':
         df = df.tail()
@@ -53,8 +69,7 @@ def csv2json(csv_path: str, json_path: str, indent: int = 4,
 
     json_str = df.to_json(orient='records', indent=indent)
 
-    with open(json_path, 'w', encoding='utf-8') as json_file:
-        json_file.write(json_str)
+    return json_str
 
 
 def get_row_numbers(arg: str) -> Dict[int, bool]:
@@ -153,9 +168,8 @@ def main():
     add_arguments(parser)
     args = parser.parse_args()
 
-    input_file = None
-    output_file = None
-    valid_input = True
+    input_path = None
+    output_path = None
     indent = 4
     rows = []
     row_mode = None
@@ -165,29 +179,21 @@ def main():
     invalid_columns = False
 
     if args.convert:
-        input_file = args.convert[0]
-        output_file = args.convert[1]
+        input_path = args.convert[0]
+        output_path = args.convert[1]
     if args.indent:
         indent = int(args.indent[0])
     if args.rows:
         row_mode = 'include'
-        valid_input = valid_row_input(args.rows)
-        rows = parse_row_numbers(args.rows)
+        invalid_rows = not valid_row_input(args.rows)
+        if not invalid_rows:
+            rows = parse_row_numbers(args.rows)
     if args.xrows:
         if row_mode:
             invalid_rows = True
         if not invalid_rows:
             row_mode = 'exclude'
             rows = parse_row_numbers(args.xrows)
-    if args.columns:
-        column_mode = 'include'
-        columns = args.columns
-    if args.xcolumns:
-        if column_mode:
-            invalid_columns = True
-        if not invalid_columns:
-            column_mode = 'exclude'
-            columns = args.xcolumns
     if args.head:
         if row_mode:
             invalid_rows = True
@@ -198,6 +204,15 @@ def main():
             invalid_rows = True
         if not invalid_rows:
             row_mode = 'tail'
+    if args.columns:
+        column_mode = 'include'
+        columns = args.columns
+    if args.xcolumns:
+        if column_mode:
+            invalid_columns = True
+        if not invalid_columns:
+            column_mode = 'exclude'
+            columns = args.xcolumns
 
     if invalid_rows:
         print('Error: you cannot include and exclude rows at the same time')
@@ -207,14 +222,13 @@ def main():
         print('Error: you cannot include and exclude columns at the same time')
         quit()
 
-    valid_input = valid_files(input_file, output_file)
-
-    if not valid_input:
+    if not valid_files(input_path, output_path):
         quit()
 
     start_t = time.time()
-    csv2json(input_file, output_file, indent, rows, row_mode,
-             columns, column_mode)
+    json_str = csv2json(input_path, indent, rows,
+                        row_mode, columns, column_mode)
+    save_json(output_path, json_str)
     end_t = time.time()
     print(f'Converted in time: {end_t - start_t}')
 

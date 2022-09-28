@@ -34,7 +34,6 @@ def valid_output_file(path: str) -> bool:
 
     if '/' in path:
         path_tokens = path.rsplit('/', 1)
-        print(path_tokens)
         if not valid_path(path_tokens[0]):
             print('Error: Invalid file path for output json file')
             return False
